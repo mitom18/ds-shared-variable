@@ -12,3 +12,5 @@ export {
 } from "https://deno.land/x/gentle_rpc@v1.9.5/mod.ts";
 
 export type { ServerMethods } from "https://deno.land/x/gentle_rpc@v1.9.5/server/response.ts";
+
+export type { JsonObject } from "https://deno.land/x/gentle_rpc@v1.9.5/json_rpc_types.ts";

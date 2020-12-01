@@ -1,9 +1,9 @@
 import CommandHandler from "../services/commandHandler.ts";
 
 CommandHandler.addCommand({
-    name: "quit",
+    name: "die",
     execute: () => {
-        console.log("Closing the application...");
+        console.warn("Warning! Application will be terminated.");
         Deno.exit();
     },
 });

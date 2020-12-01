@@ -1,4 +1,5 @@
 import { parse, serve, respond } from "./deps.ts";
+import Address from "./src/interfaces/address.ts";
 import Node from "./src/model/node.ts";
 
 // https://deno.land/std@0.79.0/flags/README.md
@@ -15,9 +16,29 @@ console.log(
     `Node accessible through address ${node.address.hostname}:${node.address.port}`
 );
 
-// TODO rpcMethods from receiver
 const rpcMethods = {
-    sayHello: (w: [string]) => `Hello ${w}`,
+    join: (addr: Address) => {
+        return node.receiver.join(addr);
+    },
+    changNNext: (addr: Address) => {
+        node.receiver.changNNext(addr);
+        return null;
+    },
+    changPrev: (addr: Address) => {
+        return node.receiver.changPrev(addr);
+    },
+    nodeMissing: (addr: Address) => {
+        node.receiver.nodeMissing(addr);
+        return null;
+    },
+    election: (arg: { id: string }) => {
+        node.receiver.election(arg);
+        return null;
+    },
+    elected: (arg: { id: string; leaderAddr: Address }) => {
+        node.receiver.elected(arg);
+        return null;
+    },
 };
 
 for await (const req of server) {
