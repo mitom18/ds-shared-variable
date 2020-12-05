@@ -39,6 +39,13 @@ const rpcMethods = {
         node.receiver.elected(arg);
         return null;
     },
+    readVariable: () => {
+        return node.receiver.readVariable();
+    },
+    writeVariable: (arg: { value: any }) => {
+        node.receiver.writeVariable(arg);
+        return null;
+    },
 };
 
 for await (const req of server) {

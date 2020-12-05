@@ -33,9 +33,13 @@ export default class Node {
     communicationService: CommunicationService;
     commandHandler?: CommandHandler;
     voting: boolean;
+    repairRunning: boolean;
+    sharedVariable: any;
 
     private constructor(config: NodeConfig) {
         this.voting = false;
+        this.repairRunning = false;
+        this.sharedVariable = null;
         this.id = uuidV4.generate();
         this.address = {
             hostname: config.ip,
@@ -57,7 +61,7 @@ export default class Node {
         this.receiver = new Receiver(this);
         this.communicationService = new CommunicationService(this);
         this.printStatus();
-        // TODO join
+        this.systemInfo = this.receiver.join(connectToAddress);
     }
 
     /**
@@ -79,6 +83,24 @@ export default class Node {
             }
             this.commandHandler.handle(commandName);
         };
+    }
+
+    public async repairTopology() {
+        if (this.repairRunning === false) {
+            this.repairRunning = true;
+            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
+            console.log(`Topology was repaired - ${this.systemInfo}`);
+            this.repairRunning = false;
+            // test the leader
+            try {
+                await this.communicationService
+                    .getLeaderRemote()
+                    .readVariable();
+            } catch (error) {
+                // Leader is dead => start election
+                this.receiver.election({ id: this.id });
+            }
+        }
     }
 
     public printStatus() {

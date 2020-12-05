@@ -98,4 +98,14 @@ export default class Receiver implements IReceiver {
             this.node.communicationService.getNextNeighborRemote().elected(arg);
         }
     }
+    readVariable() {
+        if (this.node.systemInfo.leader === this.node.address) {
+            return this.node.sharedVariable;
+        }
+    }
+    writeVariable(arg: { value: any }) {
+        if (this.node.systemInfo.leader === this.node.address) {
+            this.node.sharedVariable = arg.value;
+        }
+    }
 }
