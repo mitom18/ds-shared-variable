@@ -1,15 +1,15 @@
 import IReceiver from "../interfaces/receiver.ts";
-import Address from "../interfaces/address.ts";
+import Address, { isEqual } from "../interfaces/address.ts";
 import Node from "../model/node.ts";
 import SystemInfo from "../interfaces/systemInfo.ts";
 
 export default class Receiver implements IReceiver {
     constructor(private node: Node) {}
 
-    join(addr: Address) {
-        console.log("Join was called...");
-        if (addr == this.node.address) {
-            console.log("I am the first and leader");
+    async join(addr: Address) {
+        console.log(`Join was called with addr ${addr.hostname}:${addr.port}.`);
+        if (isEqual(addr, this.node.address)) {
+            console.log("Joining myself...");
             return this.node.systemInfo;
         } else {
             console.log("Someone else is joining...");
@@ -29,17 +29,18 @@ export default class Receiver implements IReceiver {
                 leader: systemInfo.leader,
             };
             // send change previous to my next
-            this.node.communicationService
+            await this.node.communicationService
                 .getNextNeighborRemote()
                 .changPrev(addr);
             // send change nnext to my prev
-            this.node.communicationService
+            await this.node.communicationService
                 .getRemote(initialPrev)
                 .changNNext(addr);
             tmpSystemInfo.nnextNeighbor = systemInfo.nnextNeighbor;
             // handle myself
             systemInfo.nnextNeighbor = initialNext;
             systemInfo.nextNeighbor = addr;
+
             return tmpSystemInfo;
         }
     }
@@ -54,7 +55,7 @@ export default class Receiver implements IReceiver {
     }
     async nodeMissing(addr: Address) {
         console.log(`Node missing was called with address ${addr}...`);
-        if (addr !== this.node.systemInfo.nextNeighbor) {
+        if (!isEqual(addr, this.node.systemInfo.nextNeighbor)) {
             // not for me, forward message to my next
             this.node.communicationService
                 .getNextNeighborRemote()
@@ -94,17 +95,17 @@ export default class Receiver implements IReceiver {
     elected(arg: { id: string; leaderAddr: Address }) {
         console.log(`Elected was called with id ${arg.id}...`);
         this.node.systemInfo.leader = arg.leaderAddr;
-        if (this.node.id != arg.id) {
+        if (this.node.id !== arg.id) {
             this.node.communicationService.getNextNeighborRemote().elected(arg);
         }
     }
     readVariable() {
-        if (this.node.systemInfo.leader === this.node.address) {
+        if (isEqual(this.node.systemInfo.leader, this.node.address)) {
             return this.node.sharedVariable;
         }
     }
     writeVariable(arg: { value: any }) {
-        if (this.node.systemInfo.leader === this.node.address) {
+        if (isEqual(this.node.systemInfo.leader, this.node.address)) {
             this.node.sharedVariable = arg.value;
         }
     }

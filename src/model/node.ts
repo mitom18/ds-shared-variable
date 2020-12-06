@@ -7,11 +7,19 @@ import Receiver from "../services/receiver.ts";
 import CommunicationService from "../services/communication.ts";
 import CommandHandler from "../services/commandHandler.ts";
 
+/**
+ * Base element of the system, nodes are forming a ring for Chang-Roberts algorithm.
+ */
 export default class Node {
     private static instance: Node;
 
+    /**
+     * Node is a singleton, thus static getInstance() method and private constructor.
+     * @param config configuration for the first initialization of Node instance, should be omitted when instance already exists
+     */
     public static async getInstance(config?: NodeConfig) {
         if (!Node.instance) {
+            // create new Node instance
             if (!config) {
                 console.error("Missing node configuration, using defaults...");
                 config = {
@@ -20,6 +28,8 @@ export default class Node {
                 };
             }
             Node.instance = new Node(config);
+
+            // run command listener in new worker thread
             Node.instance.commandHandler = await CommandHandler.build();
             Node.instance.runCommandHandlerWorker();
         }
@@ -28,6 +38,7 @@ export default class Node {
 
     id: string;
     address: Address;
+    connectToAddress: Address;
     systemInfo: SystemInfo;
     receiver: IReceiver;
     communicationService: CommunicationService;
@@ -51,9 +62,9 @@ export default class Node {
             prevNeighbor: this.address,
             leader: this.address,
         };
-        let connectToAddress = this.address;
+        this.connectToAddress = this.address;
         if (config.otherIp && config.otherPort) {
-            connectToAddress = {
+            this.connectToAddress = {
                 hostname: config.otherIp,
                 port: config.otherPort,
             };
@@ -61,7 +72,67 @@ export default class Node {
         this.receiver = new Receiver(this);
         this.communicationService = new CommunicationService(this);
         this.printStatus();
-        this.systemInfo = this.receiver.join(connectToAddress);
+    }
+
+    /**
+     * Connects node to the system.
+     */
+    public connect() {
+        // join the system
+        const nodeToConnect = this.communicationService.getRemote(
+            this.connectToAddress
+        );
+        nodeToConnect
+            .join(this.address)
+            .then((response) => {
+                console.log(response);
+
+                this.systemInfo = response as SystemInfo;
+                this.printStatus();
+            })
+            .catch((error) => {
+                console.error(
+                    `Could not connect to ${JSON.stringify(
+                        this.connectToAddress
+                    )}`
+                );
+                console.error(error);
+                Deno.exit(1);
+            });
+    }
+
+    /**
+     * Repairs topology when one of the node dies.
+     * Rebuilds the ring and start election of a new leader if the old one died.
+     * Expects that only one node dies and other can die after topology is repaired.
+     */
+    public async repairTopology() {
+        if (this.repairRunning === false) {
+            this.repairRunning = true;
+            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
+            console.log(`Topology was repaired - ${this.systemInfo}`);
+            this.repairRunning = false;
+            // test the leader
+            try {
+                await this.communicationService
+                    .getLeaderRemote()
+                    .readVariable();
+            } catch (error) {
+                // leader is dead => start election
+                this.receiver.election({ id: this.id });
+            }
+        }
+    }
+
+    /**
+     * Prints node's status to console as: ID, address, system info.
+     */
+    public printStatus() {
+        console.log(
+            `Node status: ${this.id}, ${this.address.hostname}:${
+                this.address.port
+            }, ${JSON.stringify(this.systemInfo)}`
+        );
     }
 
     /**
@@ -83,29 +154,5 @@ export default class Node {
             }
             this.commandHandler.handle(commandName);
         };
-    }
-
-    public async repairTopology() {
-        if (this.repairRunning === false) {
-            this.repairRunning = true;
-            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
-            console.log(`Topology was repaired - ${this.systemInfo}`);
-            this.repairRunning = false;
-            // test the leader
-            try {
-                await this.communicationService
-                    .getLeaderRemote()
-                    .readVariable();
-            } catch (error) {
-                // Leader is dead => start election
-                this.receiver.election({ id: this.id });
-            }
-        }
-    }
-
-    public printStatus() {
-        console.log(
-            `Node status: ${this.id}, ${this.address}, ${this.systemInfo}`
-        );
     }
 }

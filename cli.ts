@@ -3,10 +3,26 @@ import Address from "./src/interfaces/address.ts";
 import Node from "./src/model/node.ts";
 
 // https://deno.land/std@0.79.0/flags/README.md
-console.dir(parse(Deno.args));
+const args = parse(Deno.args);
 
-// TODO node config from Deno.args
-const node = await Node.getInstance();
+if ((args.ip && !args.port) || (!args.ip && args.port)) {
+    console.error("-ip and -port must be both either set or unset");
+    Deno.exit(1);
+}
+
+if ((args.ipTo && !args.portTo) || (!args.ipTo && args.portTo)) {
+    console.error("-ipTo and -portTo must be both either set or unset");
+    Deno.exit(1);
+}
+
+const config = {
+    ip: args.ip,
+    port: parseInt(args.port),
+    otherIp: args.ipTo,
+    otherPort: parseInt(args.portTo),
+};
+
+const node = await Node.getInstance(config.ip ? config : undefined);
 
 const server = serve({
     hostname: node.address.hostname,
@@ -48,6 +64,8 @@ const rpcMethods = {
     },
 };
 
+node.connect();
+
 for await (const req of server) {
-    await respond(req, rpcMethods);
+    respond(req, rpcMethods);
 }
