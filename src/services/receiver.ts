@@ -1,4 +1,4 @@
-import IReceiver from "../interfaces/receiver.ts";
+import IReceiver, { UNKNOWN_ELECTION_ID } from "../interfaces/receiver.ts";
 import Address, { isEqual } from "../interfaces/address.ts";
 import Node from "../model/node.ts";
 import SystemInfo from "../interfaces/systemInfo.ts";
@@ -86,7 +86,10 @@ export default class Receiver implements IReceiver {
             return;
         }
         let voteFor: string;
-        if (this.node.id > arg.id && this.node.voting === false) {
+        if (
+            arg.id === UNKNOWN_ELECTION_ID ||
+            (this.node.id > arg.id && this.node.voting === false)
+        ) {
             voteFor = this.node.id;
         } else {
             voteFor = arg.id;

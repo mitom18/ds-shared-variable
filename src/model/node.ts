@@ -2,7 +2,7 @@ import { uuidV4 } from "../../deps.ts";
 import Address, { isEqual } from "../interfaces/address.ts";
 import NodeConfig from "../interfaces/nodeConfig.ts";
 import SystemInfo from "../interfaces/systemInfo.ts";
-import IReceiver from "../interfaces/receiver.ts";
+import IReceiver, { UNKNOWN_ELECTION_ID } from "../interfaces/receiver.ts";
 import Receiver from "../services/receiver.ts";
 import CommunicationService from "../services/communication.ts";
 import CommandHandler from "../services/commandHandler.ts";
@@ -150,7 +150,17 @@ export default class Node {
         } while (isError === true);
     }
 
-    // TODO logout -> update info in my next and prev and than exit
+    /**
+     * Informs system, that node is going to shut down and than shuts the node down.
+     * Updates info in node's next and previous neighbor, starts leader election and exits.
+     */
+    public async logout() {
+        console.info("Logging out...");
+        await this.receiver.nodeMissing(this.address);
+        await this.receiver.election({ id: UNKNOWN_ELECTION_ID });
+        console.info("Logged out, exiting...");
+        Deno.exit();
+    }
 
     /**
      * Repairs topology when one of the node dies.
@@ -172,7 +182,7 @@ export default class Node {
                     .readVariable();
             } catch (error) {
                 // leader is dead => start election
-                await this.receiver.election({ id: this.id });
+                await this.receiver.election({ id: UNKNOWN_ELECTION_ID });
             }
         }
     }

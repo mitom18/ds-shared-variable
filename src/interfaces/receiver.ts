@@ -15,3 +15,8 @@ export default interface Receiver {
     readVariable(): any;
     writeVariable(arg: { value: any }): void;
 }
+
+/**
+ * Used in election functionality as value to start election process.
+ */
+export const UNKNOWN_ELECTION_ID = "unknown";
