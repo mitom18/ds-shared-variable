@@ -7,12 +7,14 @@ export default class Receiver implements IReceiver {
     constructor(private node: Node) {}
 
     async join(addr: Address) {
-        console.log(`Join was called with addr ${addr.hostname}:${addr.port}.`);
+        console.info(
+            `Join was called with addr ${addr.hostname}:${addr.port}.`
+        );
         if (isEqual(addr, this.node.address)) {
-            console.log("Joining myself...");
+            console.info("Joining myself...");
             return this.node.systemInfo;
         } else {
-            console.log("Someone else is joining...");
+            console.info("Someone else is joining...");
             const systemInfo = this.node.systemInfo;
             const initialNext: Address = {
                 hostname: systemInfo.nextNeighbor.hostname,
@@ -45,16 +47,16 @@ export default class Receiver implements IReceiver {
         }
     }
     changNNext(addr: Address) {
-        console.log("Change nnext was called...");
+        console.info("Change nnext was called...");
         this.node.systemInfo.nnextNeighbor = addr;
     }
     changPrev(addr: Address): Address {
-        console.log("Change previous was called...");
+        console.info("Change previous was called...");
         this.node.systemInfo.prevNeighbor = addr;
         return this.node.systemInfo.nextNeighbor;
     }
     async nodeMissing(addr: Address) {
-        console.log(
+        console.info(
             `Node missing was called with address ${addr.hostname}:${addr.port}...`
         );
         if (!isEqual(addr, this.node.systemInfo.nextNeighbor)) {
@@ -72,11 +74,10 @@ export default class Receiver implements IReceiver {
         await this.node.communicationService
             .getPrevNeighborRemote()
             .changNNext(this.node.systemInfo.nextNeighbor);
-        console.log("Node missing done.");
-        console.log(JSON.stringify(this.node.systemInfo));
+        console.info("Node missing done.");
     }
     async election(arg: { id: string }) {
-        console.log(`Election was called with id ${arg.id}...`);
+        console.info(`Election was called with id ${arg.id}...`);
         if (this.node.id === arg.id) {
             // I am the leader
             await this.node.communicationService
@@ -96,7 +97,7 @@ export default class Receiver implements IReceiver {
             .election({ id: voteFor });
     }
     elected(arg: { id: string; leaderAddr: Address }) {
-        console.log(`Elected was called with id ${arg.id}...`);
+        console.info(`Elected was called with id ${arg.id}...`);
         this.node.systemInfo.leader = arg.leaderAddr;
         if (this.node.id !== arg.id) {
             this.node.communicationService.getNextNeighborRemote().elected(arg);

@@ -1,6 +1,7 @@
 import { parse, serve, respond } from "./deps.ts";
 import Address from "./src/interfaces/address.ts";
 import Node from "./src/model/node.ts";
+import "./src/utils/console.ts";
 
 // Read configuration from program's arguments.
 
@@ -33,7 +34,7 @@ const server = serve({
     hostname: node.address.hostname,
     port: node.address.port,
 });
-console.log(
+console.info(
     `Node accessible through address ${node.address.hostname}:${node.address.port}`
 );
 

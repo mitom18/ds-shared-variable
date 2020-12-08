@@ -6,6 +6,8 @@ export { readLines } from "https://deno.land/std@0.79.0/io/bufio.ts";
 
 export { v4 as uuidV4 } from "https://deno.land/std@0.79.0/uuid/mod.ts";
 
+export * as Colors from "https://deno.land/std@0.79.0/fmt/colors.ts";
+
 export {
     respond,
     createRemote,

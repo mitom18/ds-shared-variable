@@ -45,7 +45,7 @@ export default class CommandHandler {
             return;
         }
 
-        console.log(`Running command with name '${commandName}'.`);
+        console.info(`Running command with name '${commandName}'.`);
         if (parts.length > 1) {
             command.execute(...parts.slice(1, parts.length));
         } else {

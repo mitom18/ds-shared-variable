@@ -6,6 +6,6 @@ CommandHandler.addCommand({
     execute: async () => {
         const node = await Node.getInstance();
         const value = await node.readSharedVariable();
-        console.log(`Variable equals to '${value}'.`);
+        console.info(`Variable equals to '${value}'.`);
     },
 });

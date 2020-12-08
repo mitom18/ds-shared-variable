@@ -6,6 +6,6 @@ CommandHandler.addCommand({
     execute: async (valueToWrite: any) => {
         const node = await Node.getInstance();
         await node.writeSharedVariable(valueToWrite);
-        console.log(`Written variable '${valueToWrite}'.`);
+        console.info(`Written variable '${valueToWrite}'.`);
     },
 });

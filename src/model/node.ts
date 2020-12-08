@@ -85,8 +85,6 @@ export default class Node {
         nodeToConnect
             .join(this.address)
             .then((response) => {
-                console.log(response);
-
                 this.systemInfo = response as SystemInfo;
                 this.printStatus();
             })
@@ -105,7 +103,7 @@ export default class Node {
      * Prints node's status to console as: ID, address, system info.
      */
     public printStatus() {
-        console.log(
+        console.info(
             `Node status: ${this.id}, ${this.address.hostname}:${
                 this.address.port
             }, ${JSON.stringify(this.systemInfo)}`
@@ -163,7 +161,7 @@ export default class Node {
         if (this.repairRunning === false) {
             this.repairRunning = true;
             await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
-            console.log(
+            console.info(
                 `Topology was repaired - ${JSON.stringify(this.systemInfo)}`
             );
             this.repairRunning = false;
