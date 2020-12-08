@@ -1,4 +1,4 @@
 export default interface Command {
     name: string;
-    execute(): void;
+    execute(...args: any): Promise<void>;
 }

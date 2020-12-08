@@ -54,29 +54,32 @@ export default class Receiver implements IReceiver {
         return this.node.systemInfo.nextNeighbor;
     }
     async nodeMissing(addr: Address) {
-        console.log(`Node missing was called with address ${addr}...`);
+        console.log(
+            `Node missing was called with address ${addr.hostname}:${addr.port}...`
+        );
         if (!isEqual(addr, this.node.systemInfo.nextNeighbor)) {
             // not for me, forward message to my next
-            this.node.communicationService
+            await this.node.communicationService
                 .getNextNeighborRemote()
                 .nodeMissing(addr);
             return;
         }
         // my next is missing
+        this.node.systemInfo.nextNeighbor = this.node.systemInfo.nnextNeighbor;
         this.node.systemInfo.nnextNeighbor = (await this.node.communicationService
             .getNNextNeighborRemote()
             .changPrev(this.node.address)) as Address;
-        this.node.systemInfo.nextNeighbor = this.node.systemInfo.nnextNeighbor;
-        this.node.communicationService
+        await this.node.communicationService
             .getPrevNeighborRemote()
-            .changeNNext(this.node.systemInfo.nextNeighbor);
+            .changNNext(this.node.systemInfo.nextNeighbor);
         console.log("Node missing done.");
+        console.log(JSON.stringify(this.node.systemInfo));
     }
-    election(arg: { id: string }) {
+    async election(arg: { id: string }) {
         console.log(`Election was called with id ${arg.id}...`);
         if (this.node.id === arg.id) {
             // I am the leader
-            this.node.communicationService
+            await this.node.communicationService
                 .getNextNeighborRemote()
                 .elected({ id: arg.id, leaderAddr: this.node.address });
             return;
@@ -88,7 +91,7 @@ export default class Receiver implements IReceiver {
             voteFor = arg.id;
         }
         this.node.voting = true;
-        this.node.communicationService
+        await this.node.communicationService
             .getNextNeighborRemote()
             .election({ id: voteFor });
     }

@@ -1,5 +1,5 @@
 import { uuidV4 } from "../../deps.ts";
-import Address from "../interfaces/address.ts";
+import Address, { isEqual } from "../interfaces/address.ts";
 import NodeConfig from "../interfaces/nodeConfig.ts";
 import SystemInfo from "../interfaces/systemInfo.ts";
 import IReceiver from "../interfaces/receiver.ts";
@@ -110,7 +110,9 @@ export default class Node {
         if (this.repairRunning === false) {
             this.repairRunning = true;
             await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
-            console.log(`Topology was repaired - ${this.systemInfo}`);
+            console.log(
+                `Topology was repaired - ${JSON.stringify(this.systemInfo)}`
+            );
             this.repairRunning = false;
             // test the leader
             try {
@@ -119,7 +121,7 @@ export default class Node {
                     .readVariable();
             } catch (error) {
                 // leader is dead => start election
-                this.receiver.election({ id: this.id });
+                await this.receiver.election({ id: this.id });
             }
         }
     }
@@ -136,6 +138,45 @@ export default class Node {
     }
 
     /**
+     * Reads the value of shared variable from the leader.
+     */
+    public async readSharedVariable() {
+        let isError = false;
+        let value = undefined;
+        do {
+            try {
+                value = await this.communicationService
+                    .getLeaderRemote()
+                    .readVariable();
+                isError = false;
+            } catch (error) {
+                isError = true;
+                await this.repairTopology();
+            }
+        } while (isError === true);
+
+        return value;
+    }
+
+    /**
+     * Writes given value to the shared variable in the leader.
+     */
+    public async writeSharedVariable(value: any) {
+        let isError = false;
+        do {
+            try {
+                await this.communicationService
+                    .getLeaderRemote()
+                    .writeVariable({ value });
+                isError = false;
+            } catch (error) {
+                isError = true;
+                await this.repairTopology();
+            }
+        } while (isError === true);
+    }
+
+    /**
      * Runs command handler worker (other thread) for serving the command line.
      */
     private runCommandHandlerWorker() {
@@ -145,14 +186,15 @@ export default class Node {
         );
 
         worker.onmessage = (e) => {
-            let commandName = e.data as string;
-            commandName = commandName.replace("\r", "");
+            let commandLineData = e.data as string;
+            // sanitize the given string
+            commandLineData = commandLineData.replace("\r", "");
             if (!this.commandHandler) {
                 throw new Error(
                     "Command handler has not been initialized yet."
                 );
             }
-            this.commandHandler.handle(commandName);
+            this.commandHandler.handle(commandLineData);
         };
     }
 }

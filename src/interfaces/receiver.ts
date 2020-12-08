@@ -6,7 +6,7 @@ export default interface Receiver {
     changNNext(addr: Address): void;
     changPrev(addr: Address): Address;
     nodeMissing(addr: Address): Promise<void>;
-    election(arg: { id: string }): void;
+    election(arg: { id: string }): Promise<void>;
     elected(arg: { id: string; leaderAddr: Address }): void;
     readVariable(): any;
     writeVariable(arg: { value: any }): void;
