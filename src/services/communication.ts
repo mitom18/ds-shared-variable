@@ -2,6 +2,10 @@ import Address from "../interfaces/address.ts";
 import Node from "../model/node.ts";
 import { createRemote } from "../../deps.ts";
 
+/**
+ * Helper class for getting gentleRpc remote objects,
+ * which are than used for calling JSON-RPC methods.
+ */
 export default class CommunicationService {
     constructor(private node: Node) {}
 

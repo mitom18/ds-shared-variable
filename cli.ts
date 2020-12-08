@@ -2,7 +2,8 @@ import { parse, serve, respond } from "./deps.ts";
 import Address from "./src/interfaces/address.ts";
 import Node from "./src/model/node.ts";
 
-// https://deno.land/std@0.79.0/flags/README.md
+// Read configuration from program's arguments.
+
 const args = parse(Deno.args);
 
 if ((args.ip && !args.port) || (!args.ip && args.port)) {
@@ -22,7 +23,11 @@ const config = {
     otherPort: parseInt(args.portTo),
 };
 
+// Initialize the node.
+
 const node = await Node.getInstance(config.ip ? config : undefined);
+
+// Run the node's server to listen for JSON remote procedure calls.
 
 const server = serve({
     hostname: node.address.hostname,
@@ -67,5 +72,5 @@ const rpcMethods = {
 node.connect();
 
 for await (const req of server) {
-    respond(req, rpcMethods);
+    respond(req, rpcMethods); // no await, we don't want to block here
 }

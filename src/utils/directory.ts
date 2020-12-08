@@ -1,4 +1,7 @@
-/** This function allows loading all files in a folder. */
+/**
+ * This function loads all files in a folder with given path.
+ * @param {string} path - Path of the folder to load files from.
+ */
 export async function importDirectory(path: string) {
     const files = Deno.readDirSync(Deno.realPathSync(path));
 

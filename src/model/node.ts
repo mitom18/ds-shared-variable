@@ -14,7 +14,7 @@ export default class Node {
     private static instance: Node;
 
     /**
-     * Node is a singleton, thus static getInstance() method and private constructor.
+     * Node is a singleton, thus static getInstance() method and a private constructor.
      * @param config configuration for the first initialization of Node instance, should be omitted when instance already exists
      */
     public static async getInstance(config?: NodeConfig) {
@@ -102,31 +102,6 @@ export default class Node {
     }
 
     /**
-     * Repairs topology when one of the node dies.
-     * Rebuilds the ring and start election of a new leader if the old one died.
-     * Expects that only one node dies and other can die after topology is repaired.
-     */
-    public async repairTopology() {
-        if (this.repairRunning === false) {
-            this.repairRunning = true;
-            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
-            console.log(
-                `Topology was repaired - ${JSON.stringify(this.systemInfo)}`
-            );
-            this.repairRunning = false;
-            // test the leader
-            try {
-                await this.communicationService
-                    .getLeaderRemote()
-                    .readVariable();
-            } catch (error) {
-                // leader is dead => start election
-                await this.receiver.election({ id: this.id });
-            }
-        }
-    }
-
-    /**
      * Prints node's status to console as: ID, address, system info.
      */
     public printStatus() {
@@ -160,6 +135,7 @@ export default class Node {
 
     /**
      * Writes given value to the shared variable in the leader.
+     * @param {any} value - Value to write to the shared variable.
      */
     public async writeSharedVariable(value: any) {
         let isError = false;
@@ -174,6 +150,33 @@ export default class Node {
                 await this.repairTopology();
             }
         } while (isError === true);
+    }
+
+    // TODO logout -> update info in my next and prev and than exit
+
+    /**
+     * Repairs topology when one of the node dies.
+     * Rebuilds the ring and start election of a new leader if the old one died.
+     * Expects that only one node dies and other can die after topology is repaired.
+     */
+    private async repairTopology() {
+        if (this.repairRunning === false) {
+            this.repairRunning = true;
+            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
+            console.log(
+                `Topology was repaired - ${JSON.stringify(this.systemInfo)}`
+            );
+            this.repairRunning = false;
+            // test the leader
+            try {
+                await this.communicationService
+                    .getLeaderRemote()
+                    .readVariable();
+            } catch (error) {
+                // leader is dead => start election
+                await this.receiver.election({ id: this.id });
+            }
+        }
     }
 
     /**
