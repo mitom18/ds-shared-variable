@@ -64,7 +64,7 @@ const rpcMethods = {
     readVariable: () => {
         return node.receiver.readVariable();
     },
-    writeVariable: (arg: { value: any }) => {
+    writeVariable: (arg: { value: any; isBackup: boolean }) => {
         node.receiver.writeVariable(arg);
         return null;
     },

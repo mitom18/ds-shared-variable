@@ -115,6 +115,10 @@ export default class Node {
      */
     public async readSharedVariable() {
         let isError = false;
+        const initialLeader: Address = {
+            hostname: this.systemInfo.leader.hostname,
+            port: this.systemInfo.leader.port,
+        };
         let value = undefined;
         do {
             try {
@@ -123,8 +127,10 @@ export default class Node {
                     .readVariable();
                 isError = false;
             } catch (error) {
-                isError = true;
-                await this.repairTopology();
+                if (isEqual(initialLeader, this.systemInfo.leader)) {
+                    isError = true;
+                    await this.repairTopology(initialLeader);
+                }
             }
         } while (isError === true);
 
@@ -137,15 +143,21 @@ export default class Node {
      */
     public async writeSharedVariable(value: any) {
         let isError = false;
+        const initialLeader: Address = {
+            hostname: this.systemInfo.leader.hostname,
+            port: this.systemInfo.leader.port,
+        };
         do {
             try {
                 await this.communicationService
                     .getLeaderRemote()
-                    .writeVariable({ value });
+                    .writeVariable({ value, isBackup: false });
                 isError = false;
             } catch (error) {
-                isError = true;
-                await this.repairTopology();
+                if (isEqual(initialLeader, this.systemInfo.leader)) {
+                    isError = true;
+                    await this.repairTopology(initialLeader);
+                }
             }
         } while (isError === true);
     }
@@ -156,8 +168,12 @@ export default class Node {
      */
     public async logout() {
         console.info("Logging out...");
-        await this.receiver.nodeMissing(this.address);
-        await this.receiver.election({ id: UNKNOWN_ELECTION_ID });
+        await this.communicationService
+            .getPrevNeighborRemote()
+            .nodeMissing(this.address);
+        await this.communicationService
+            .getNextNeighborRemote()
+            .election({ id: UNKNOWN_ELECTION_ID });
         console.info("Logged out, exiting...");
         Deno.exit();
     }
@@ -167,20 +183,15 @@ export default class Node {
      * Rebuilds the ring and start election of a new leader if the old one died.
      * Expects that only one node dies and other can die after topology is repaired.
      */
-    private async repairTopology() {
+    private async repairTopology(missingNode: Address) {
         if (this.repairRunning === false) {
             this.repairRunning = true;
-            await this.receiver.nodeMissing(this.systemInfo.nextNeighbor);
+            await this.receiver.nodeMissing(missingNode);
             console.info(
                 `Topology was repaired - ${JSON.stringify(this.systemInfo)}`
             );
             this.repairRunning = false;
-            // test the leader
-            try {
-                await this.communicationService
-                    .getLeaderRemote()
-                    .readVariable();
-            } catch (error) {
+            if (isEqual(missingNode, this.systemInfo.leader)) {
                 // leader is dead => start election
                 await this.receiver.election({ id: UNKNOWN_ELECTION_ID });
             }

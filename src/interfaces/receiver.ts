@@ -13,10 +13,10 @@ export default interface Receiver {
     election(arg: { id: string }): Promise<void>;
     elected(arg: { id: string; leaderAddr: Address }): void;
     readVariable(): any;
-    writeVariable(arg: { value: any }): void;
+    writeVariable(arg: { value: any; isBackup: boolean }): Promise<void>;
 }
 
 /**
- * Used in election functionality as value to start election process.
+ * Used in election functionality as value to start the election process.
  */
 export const UNKNOWN_ELECTION_ID = "unknown";

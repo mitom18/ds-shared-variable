@@ -88,7 +88,7 @@ export default class Receiver implements IReceiver {
         let voteFor: string;
         if (
             arg.id === UNKNOWN_ELECTION_ID ||
-            (this.node.id > arg.id && this.node.voting === false)
+            (this.node.sharedVariable !== null && this.node.voting === false)
         ) {
             voteFor = this.node.id;
         } else {
@@ -111,9 +111,17 @@ export default class Receiver implements IReceiver {
             return this.node.sharedVariable;
         }
     }
-    writeVariable(arg: { value: any }) {
-        if (isEqual(this.node.systemInfo.leader, this.node.address)) {
+    async writeVariable(arg: { value: any; isBackup: boolean }) {
+        if (
+            arg.isBackup ||
+            isEqual(this.node.systemInfo.leader, this.node.address)
+        ) {
             this.node.sharedVariable = arg.value;
+            if (!arg.isBackup) {
+                await this.node.communicationService
+                    .getNextNeighborRemote()
+                    .writeVariable({ value: arg.value, isBackup: true });
+            }
         }
     }
 }
