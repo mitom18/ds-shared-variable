@@ -12,7 +12,7 @@ export default interface Receiver {
     nodeMissing(addr: Address): Promise<void>;
     election(arg: { id: string }): Promise<void>;
     elected(arg: { id: string; leaderAddr: Address }): void;
-    readVariable(): any;
+    readVariable(): Promise<any>;
     writeVariable(arg: { value: any; isBackup: boolean }): Promise<void>;
 }
 

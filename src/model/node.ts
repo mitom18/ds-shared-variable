@@ -46,11 +46,13 @@ export default class Node {
     voting: boolean;
     repairRunning: boolean;
     sharedVariable: any;
+    sharedVariableTime: number;
 
     private constructor(config: NodeConfig) {
         this.voting = false;
         this.repairRunning = false;
         this.sharedVariable = null;
+        this.sharedVariableTime = 0;
         this.id = uuidV4.generate();
         this.address = {
             hostname: config.ip,
@@ -78,7 +80,6 @@ export default class Node {
      * Connects node to the system.
      */
     public connect() {
-        // join the system
         const nodeToConnect = this.communicationService.getRemote(
             this.connectToAddress
         );

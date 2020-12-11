@@ -106,21 +106,43 @@ export default class Receiver implements IReceiver {
             this.node.communicationService.getNextNeighborRemote().elected(arg);
         }
     }
-    readVariable() {
+    async readVariable() {
         if (isEqual(this.node.systemInfo.leader, this.node.address)) {
+            this.node.sharedVariableTime++;
+            console.info(
+                `[TIME ${this.node.sharedVariableTime}] - Read variable '${this.node.sharedVariable}'.`
+            );
+            await this.node.communicationService
+                .getNextNeighborRemote()
+                .writeVariable({
+                    value: this.node.sharedVariable,
+                    isBackup: true,
+                    time: this.node.sharedVariableTime,
+                });
             return this.node.sharedVariable;
         }
     }
-    async writeVariable(arg: { value: any; isBackup: boolean }) {
+    async writeVariable(arg: { value: any; isBackup: boolean; time?: number }) {
         if (
             arg.isBackup ||
             isEqual(this.node.systemInfo.leader, this.node.address)
         ) {
             this.node.sharedVariable = arg.value;
             if (!arg.isBackup) {
+                this.node.sharedVariableTime++;
+                console.info(
+                    `[TIME ${this.node.sharedVariableTime}] - Written variable '${this.node.sharedVariable}'.`
+                );
                 await this.node.communicationService
                     .getNextNeighborRemote()
-                    .writeVariable({ value: arg.value, isBackup: true });
+                    .writeVariable({
+                        value: arg.value,
+                        isBackup: true,
+                        time: this.node.sharedVariableTime,
+                    });
+            }
+            if (arg.isBackup && arg.time !== undefined) {
+                this.node.sharedVariableTime = arg.time;
             }
         }
     }
