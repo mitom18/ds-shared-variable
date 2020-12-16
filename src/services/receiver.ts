@@ -88,7 +88,8 @@ export default class Receiver implements IReceiver {
         let voteFor: string;
         if (
             arg.id === UNKNOWN_ELECTION_ID ||
-            (this.node.sharedVariable !== null && this.node.voting === false)
+            (this.node.sharedVariableBackup === true &&
+                this.node.voting === false)
         ) {
             voteFor = this.node.id;
         } else {
@@ -140,6 +141,8 @@ export default class Receiver implements IReceiver {
                         isBackup: true,
                         time: this.node.sharedVariableTime,
                     });
+            } else {
+                this.node.sharedVariableBackup = true;
             }
             if (arg.isBackup && arg.time !== undefined) {
                 this.node.sharedVariableTime = arg.time;

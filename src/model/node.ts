@@ -46,12 +46,14 @@ export default class Node {
     voting: boolean;
     repairRunning: boolean;
     sharedVariable: any;
+    sharedVariableBackup: boolean;
     sharedVariableTime: number;
 
     private constructor(config: NodeConfig) {
         this.voting = false;
         this.repairRunning = false;
         this.sharedVariable = null;
+        this.sharedVariableBackup = false;
         this.sharedVariableTime = 0;
         this.id = uuidV4.generate();
         this.address = {
