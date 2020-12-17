@@ -68,6 +68,9 @@ const rpcMethods = {
         node.receiver.writeVariable(arg);
         return null;
     },
+    ping: () => {
+        return node.receiver.ping();
+    },
 };
 
 node.connect();

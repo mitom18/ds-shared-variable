@@ -166,6 +166,20 @@ export default class Node {
     }
 
     /**
+     * Performs ping to the next neighbor, repairs topology if the next neighbor is dead.
+     */
+    public async pingNext() {
+        try {
+            const message = await this.communicationService
+                .getNextNeighborRemote()
+                .ping();
+            console.info(`Received message from my next: ${message}`);
+        } catch (error) {
+            await this.repairTopology(this.systemInfo.nextNeighbor);
+        }
+    }
+
+    /**
      * Informs system, that node is going to shut down and than shuts the node down.
      * Updates info in node's next and previous neighbor, starts leader election and exits.
      */

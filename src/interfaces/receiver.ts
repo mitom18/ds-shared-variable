@@ -14,6 +14,7 @@ export default interface Receiver {
     elected(arg: { id: string; leaderAddr: Address }): void;
     readVariable(): Promise<any>;
     writeVariable(arg: { value: any; isBackup: boolean }): Promise<void>;
+    ping(): string;
 }
 
 /**

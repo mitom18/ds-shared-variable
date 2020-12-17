@@ -28,6 +28,7 @@ Examples:
 |     **info**      | prints the node's configuration (ID, address, neighbors) |
 |     **read**      | reads the value of the shared variable                   |
 | **write <value>** | writes the value to the shared variable                  |
+|   **ping-next**   | pings the next neighbor, repairs topology if needed      |
 |    **logout**     | logs out from the system leaving its topology correct    |
 |      **die**      | exits leaving the system's topology scattered            |
 

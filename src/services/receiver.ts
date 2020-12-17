@@ -106,6 +106,8 @@ export default class Receiver implements IReceiver {
         this.node.voting = false;
         if (this.node.id !== arg.id) {
             this.node.communicationService.getNextNeighborRemote().elected(arg);
+        } else {
+            this.node.sharedVariableBackup = false;
         }
     }
     async readVariable() {
@@ -149,5 +151,9 @@ export default class Receiver implements IReceiver {
                 this.node.sharedVariableTime = arg.time;
             }
         }
+    }
+    ping() {
+        console.info("Ping called...");
+        return "I am alive!";
     }
 }
