@@ -103,6 +103,7 @@ export default class Receiver implements IReceiver {
     elected(arg: { id: string; leaderAddr: Address }) {
         console.info(`Elected was called with id ${arg.id}...`);
         this.node.systemInfo.leader = arg.leaderAddr;
+        this.node.voting = false;
         if (this.node.id !== arg.id) {
             this.node.communicationService.getNextNeighborRemote().elected(arg);
         }
